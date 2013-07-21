@@ -9,4 +9,7 @@
 ![image](https://raw.github.com/dfinke/PSharp/master/images/SearchThenNavigate.png)
 
 #### Plus, you can quickly narrow your search to just variables, functions or commands
+* Prefix your search *__v:__* to just search variables
+* Prefix your search *__f:__* to just search functions
+* Prefix your search *__c:__* to just search commands
 ![image](https://raw.github.com/dfinke/PSharp/master/images/SearchVariables.png)
