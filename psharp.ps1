@@ -109,11 +109,12 @@ $ShowIt = {
 
             $ResultsPane.Focus()
             $ResultsPane.SelectedIndex=0
+            
             return
         }
         
         try {
-            $ResultsPane.ItemsSource = $list | ? {$_.name -match $SearchBox.Text}
+            DoParseSearch $SearchBox.Text
         } catch {}
 
     } -SelectionChanged {
@@ -128,6 +129,33 @@ $ShowIt = {
                 $Selected.EndColumnNumber
             )
         }
+    }
+}
+
+function DoParseSearch ($search) {
+
+    Begin {
+        if(!$search) {return}
+
+        $h=@{
+            v='variable'
+            f='function'
+            c='command'
+        }
+    }
+
+    End {
+        $where = {$_.name -match $search}
+        if($search -and $search.IndexOf(':') -eq 1) {
+            $type, $name = $search.split(':')    
+            $where = '{{ $_.type -eq "{0}" -and $_.name -match "{1}" }}' -f $h.$type, $name | Invoke-Expression            
+        } 
+
+        cls        
+        $nl = $list | ? $where
+        $nl | ft | Out-Host
+        $ResultsPane.ItemsSource = $null
+        $ResultsPane.ItemsSource = $nl
     }
 }
 
