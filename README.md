@@ -7,3 +7,6 @@
 
 #### You can also search for specifically named items and then navigate
 ![image](https://raw.github.com/dfinke/PSharp/master/images/SearchThenNavigate.png)
+
+#### Plus, you can quickly narrow your search to just variables, functions or commands
+![image](https://raw.github.com/dfinke/PSharp/master/images/SearchVariables.png)
