@@ -51,7 +51,7 @@ function Get-AstDetail {
     Begin {
         $FunctionDefinitionAst = 'System.Management.Automation.Language.FunctionDefinitionAst' -as [Type]
         $VariableExpressionAst = 'System.Management.Automation.Language.VariableExpressionAst' -as [Type]
-        $CommandAst = 'System.Management.Automation.Language.FunctionDefinitionAst' -as [Type]    
+        $CommandAst = 'System.Management.Automation.Language.CommandAst' -as [Type]            
     }
 
     Process {
@@ -140,25 +140,21 @@ $ShowIt = {
 
 function DoParseSearch ($search) {
 
-    Begin {
-        if(!$search) {return}
+    if(!$search) {return}
 
-        $h=@{
-            v='variable'
-            f='function'
-            c='command'
-        }
+    $h=@{
+        v='variable'
+        f='function'
+        c='command'
     }
 
-    End {
-        $whereBlock = {$_.name -match $search}
-        if($search -and $search.IndexOf(':') -eq 1) {
-            $type, $name = $search.split(':')    
-            $whereBlock = '{{ $_.type -eq "{0}" -and $_.name -match "{1}" }}' -f $h.$type, $name | Invoke-Expression            
-        } 
+    $whereBlock = {$_.name -match $search}
+    if($search -and $search.IndexOf(':') -eq 1) {
+        $type, $name = $search.split(':')    
+        $whereBlock = '{{ $_.type -eq "{0}" -and $_.name -match "{1}" }}' -f $h.$type, $name | Invoke-Expression            
+    } 
 
-        $ResultsPane.ItemsSource = @($list | Where $whereBlock)
-    }
+    $ResultsPane.ItemsSource = @($list | Where $whereBlock)
 }
 
 $DisplayName="_PSharp"
