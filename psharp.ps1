@@ -3,7 +3,7 @@ $MainWindow=@'
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Topmost="True"
         WindowStartupLocation="CenterScreen"
-        Title="PSHarp" Height="350" Width="525">
+        Title="PSHarp" Height="350" Width="425">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="35" />
@@ -12,7 +12,7 @@ $MainWindow=@'
 
         <Button 
             IsDefault="True" IsCancel="True" 
-            Background="Transparent"/>
+            Background="Transparent" Margin="3"/>
 
         <TextBox x:Name="SearchBox" Grid.Row="0" Margin="5"></TextBox>
         <ListView x:Name="ResultsPane" Grid.Row="1" Margin="5">
@@ -48,6 +48,12 @@ function Get-AstDetail {
         $FullName
     )
 
+    Begin {
+        $FunctionDefinitionAst = 'System.Management.Automation.Language.FunctionDefinitionAst' -as [Type]
+        $VariableExpressionAst = 'System.Management.Automation.Language.VariableExpressionAst' -as [Type]
+        $CommandAst = 'System.Management.Automation.Language.FunctionDefinitionAst' -as [Type]    
+    }
+
     Process {
 
         if(!$FullName) {
@@ -57,21 +63,21 @@ function Get-AstDetail {
         }
 
         $fileAST=[System.Management.Automation.Language.Parser]::ParseInput($src, [ref]$null, [ref]$null)
-
+        
         $details = {
             param($ast)
 
-            $ast -is [System.Management.Automation.Language.FunctionDefinitionAst]
-            $ast -is [System.Management.Automation.Language.VariableExpressionAst]
-            $ast -is [System.Management.Automation.Language.CommandAst]
+            $ast -is $FunctionDefinitionAst
+            $ast -is $VariableExpressionAst
+            $ast -is $CommandAst
         }
 
         $filteredAST = $fileAST.FindAll($details,$true)
 
         switch ($filteredAST) {
-            {$_ -is [System.Management.Automation.Language.FunctionDefinitionAst]} { New-ASTItem Function $_.name $_.extent }
-            {$_ -is [System.Management.Automation.Language.CommandAst]}            { New-ASTItem Command  $_.Extent.Text $_.extent }
-            {$_ -is [System.Management.Automation.Language.VariableExpressionAst]} { New-ASTItem Variable $_.extent.text $_.extent }
+            {$_ -is $FunctionDefinitionAst} { New-ASTItem Function $_.name $_.extent }
+            {$_ -is $CommandAst}            { New-ASTItem Command  $_.Extent.Text $_.extent }
+            {$_ -is $VariableExpressionAst} { New-ASTItem Variable $_.extent.text $_.extent }
         }
     }
 }
@@ -145,13 +151,13 @@ function DoParseSearch ($search) {
     }
 
     End {
-        $where = {$_.name -match $search}
+        $whereBlock = {$_.name -match $search}
         if($search -and $search.IndexOf(':') -eq 1) {
             $type, $name = $search.split(':')    
-            $where = '{{ $_.type -eq "{0}" -and $_.name -match "{1}" }}' -f $h.$type, $name | Invoke-Expression            
+            $whereBlock = '{{ $_.type -eq "{0}" -and $_.name -match "{1}" }}' -f $h.$type, $name | Invoke-Expression            
         } 
 
-        $ResultsPane.ItemsSource = @($list | ? $where)
+        $ResultsPane.ItemsSource = @($list | Where $whereBlock)
     }
 }
 
