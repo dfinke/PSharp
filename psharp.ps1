@@ -151,11 +151,7 @@ function DoParseSearch ($search) {
             $where = '{{ $_.type -eq "{0}" -and $_.name -match "{1}" }}' -f $h.$type, $name | Invoke-Expression            
         } 
 
-        cls        
-        $nl = $list | ? $where
-        $nl | ft | Out-Host
-        $ResultsPane.ItemsSource = $null
-        $ResultsPane.ItemsSource = $nl
+        $ResultsPane.ItemsSource = @($list | ? $where)
     }
 }
 
