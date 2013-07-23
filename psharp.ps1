@@ -179,8 +179,8 @@ function Find-DetailByType {
     $token = Get-ScriptItem
     
     $token.Type|Out-Host
-    switch ($token.Type) {
-        "CommandArgument" {
+    switch -regex ($token.Type) {
+        "CommandArgument|Command" {
             $TokenType="Command|Function"
             $Name=$token.Content
         }
