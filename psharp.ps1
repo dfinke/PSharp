@@ -162,7 +162,7 @@ function DoParseSearch ($search) {
 
 function Get-ScriptItem {
 
-    cls
+    # Used/Refactored Get-CurrentToken from ISEPack
     $currentFile = $psise.CurrentFile.Editor
     $tokens = [Management.Automation.PSParser]::Tokenize($currentFile.Text, [ref]$null)
     $line   = $currentFile.CaretLine
@@ -171,7 +171,7 @@ function Get-ScriptItem {
     foreach ($token in $tokens) {
         if ($token.StartLine -eq $line -and $token.EndLine -eq $line) {
             if ($token.StartColumn -le $column -and $token.EndColumn -ge $column) {
-                return ($token|ft -a)
+                $token
             }
         }        
     }
