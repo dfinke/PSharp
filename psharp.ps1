@@ -77,10 +77,7 @@ function Get-AstDetail {
         switch ($filteredAST) {
             {$_ -is $FunctionDefinitionAst} { New-ASTItem Function $_.name $_.extent }
             {$_ -is $CommandAst}            { New-ASTItem Command  $_.Extent.Text $_.extent }
-            {$_ -is $VariableExpressionAst} { 
-                #"{0} {1}" -f $_.Extent.Text, $_.StaticType| Out-Host
-                New-ASTItem Variable $_.extent.text $_.extent 
-            }
+            {$_ -is $VariableExpressionAst} { New-ASTItem Variable $_.extent.text $_.extent }
         }
     }
 }
@@ -89,8 +86,40 @@ function Out-SearchView {
     param(
         $list,
         [ScriptBlock]$PreviewKeyUp,
-        [ScriptBlock]$SelectionChanged={cls; $args[1].AddedItems | fl * | Out-Host}
+        [ScriptBlock]$SelectionChanged
     )
+
+    if(!$PreviewKeyUp) {
+        $PreviewKeyUp = {        
+            param($sender, $info)        
+        
+            if($info.key -eq 'down') {
+                $ResultsPane.Focus()
+                $ResultsPane.SelectedIndex=0
+            
+                return
+            }
+        
+            try {
+                DoParseSearch $SearchBox.Text
+            } catch {}
+        }
+    }
+
+    if(!$SelectionChanged) {
+        $SelectionChanged = {
+            param($sender, $data)
+            if($data.AddedItems) {
+                $Selected=$data.AddedItems
+                $psISE.CurrentFile.Editor.Select(
+                    $Selected.StartLineNumber, 
+                    $Selected.StartColumnNumber, 
+                    $Selected.EndLineNumber, 
+                    $Selected.EndColumnNumber
+                )
+            }
+        }
+    }
 
     $Window = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader ([xml]$MainWindow)))
     $SearchBox=$Window.FindName("SearchBox")
@@ -108,38 +137,7 @@ function Out-SearchView {
 }
 
 
-$ShowIt = {
-    
-    Out-SearchView (Get-AstDetail) -PreviewKeyUp {
-        
-        param($sender, $info)        
-        
-        if($info.key -eq 'down') {
-
-            $ResultsPane.Focus()
-            $ResultsPane.SelectedIndex=0
-            
-            return
-        }
-        
-        try {
-            DoParseSearch $SearchBox.Text
-        } catch {}
-
-    } -SelectionChanged {
-        param($sender, $data)
-
-        if($data.AddedItems) {
-            $Selected=$data.AddedItems
-            $psISE.CurrentFile.Editor.Select(
-                $Selected.StartLineNumber, 
-                $Selected.StartColumnNumber, 
-                $Selected.EndLineNumber, 
-                $Selected.EndColumnNumber
-            )
-        }
-    }
-}
+$ShowIt = { Out-SearchView (Get-AstDetail) }
 
 function DoParseSearch ($search) {
 
@@ -177,6 +175,26 @@ function Get-ScriptItem {
     }
 }
 
+function Find-DetailByType {
+    $token = Get-ScriptItem
+    
+    $token.Type|Out-Host
+    switch ($token.Type) {
+        "CommandArgument" {
+            $TokenType="Command|Function"
+            $Name=$token.Content
+        }
+
+        "Variable" {
+            $TokenType="Variable"
+            $Name='\$' + $token.Content
+        }
+    }
+    
+    $list  = Get-AstDetail | where {$_.Type -match $TokenType -and $_.Name -match $Name}
+    Out-SearchView $list
+}
+
 function Add-MenuItem {
     param([string]$DisplayName, [scriptblock]$SB, [string]$ShortCut)
 
@@ -188,5 +206,6 @@ function Add-MenuItem {
     $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add($DisplayName, $SB, $ShortCut)
 }
 
+
 Add-MenuItem "_PSharp" $ShowIt "CTRL+Shift+X"
-Add-MenuItem "_Get ScriptItem" ([scriptblock]::Create((Get-Command Get-ScriptItem).Definition)) "CTRL+Shift+T"
+Add-MenuItem "_Get ScriptItem" ([scriptblock]::Create((Get-Command Find-DetailByType).Definition)) "CTRL+Shift+T"
