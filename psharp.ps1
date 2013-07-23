@@ -1,4 +1,4 @@
-$MainWindow=@'
+[string]$MainWindow=@'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Topmost="True"
@@ -77,7 +77,10 @@ function Get-AstDetail {
         switch ($filteredAST) {
             {$_ -is $FunctionDefinitionAst} { New-ASTItem Function $_.name $_.extent }
             {$_ -is $CommandAst}            { New-ASTItem Command  $_.Extent.Text $_.extent }
-            {$_ -is $VariableExpressionAst} { New-ASTItem Variable $_.extent.text $_.extent }
+            {$_ -is $VariableExpressionAst} { 
+                #"{0} {1}" -f $_.Extent.Text, $_.StaticType| Out-Host
+                New-ASTItem Variable $_.extent.text $_.extent 
+            }
         }
     }
 }
@@ -93,7 +96,7 @@ function Out-SearchView {
     $SearchBox=$Window.FindName("SearchBox")
     $ResultsPane=$Window.FindName("ResultsPane")
 
-    $ResultsPane.ItemsSource=$list
+    $ResultsPane.ItemsSource=@($list)
     $ResultsPane.DisplayMemberPath="Name"
 
     [void]$SearchBox.Focus()
