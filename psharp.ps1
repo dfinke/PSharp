@@ -160,12 +160,42 @@ function DoParseSearch ($search) {
     $ResultsPane.ItemsSource = @($list | Where $whereBlock)
 }
 
-$DisplayName="_PSharp"
+function Get-ScriptItem {
 
-$menu=$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus | Where {$_.DisplayName -Match $DisplayName}
+    cls
+    $currentFile = $psise.CurrentFile.Editor
+    $tokens = [Management.Automation.PSParser]::Tokenize($currentFile.Text, [ref]$null)
+    $line   = $currentFile.CaretLine
+    $column = $currentFile.CaretColumn
 
-if($menu) {
-    [void]$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Remove($menu)
+    foreach ($token in $tokens) {
+        if ($token.StartLine -eq $line -and $token.EndLine -eq $line) {
+            if ($token.StartColumn -le $column -and $token.EndColumn -ge $column) {
+                return ($token|ft -a)
+            }
+        }        
+    }
 }
 
-$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add($DisplayName, $ShowIt, "CTRL+Shift+x")
+function Add-MenuItemPSharp {
+    $DisplayName="_PSharp"
+    $menu=$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus | Where {$_.DisplayName -Match $DisplayName}
+    if($menu) {
+        [void]$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Remove($menu)
+    }
+    $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add($DisplayName, $ShowIt, "CTRL+Shift+x")
+}
+
+function Add-MenuItem {
+    param([string]$DisplayName, [scriptblock]$SB, [string]$ShortCut)
+
+    #$DisplayName="_Get ScriptItem"
+    $menu=$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus | Where {$_.DisplayName -Match $DisplayName}
+    if($menu) {
+        [void]$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Remove($menu)
+    }
+    $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add($DisplayName, $SB, $ShortCut)
+}
+
+Add-MenuItem "_PSharp" $ShowIt "CTRL+Shift+X"
+Add-MenuItem "_Get ScriptItem" ([scriptblock]::Create((gcm Get-ScriptItem).Definition)) "CTRL+Shift+T"
