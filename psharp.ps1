@@ -177,15 +177,6 @@ function Get-ScriptItem {
     }
 }
 
-function Add-MenuItemPSharp {
-    $DisplayName="_PSharp"
-    $menu=$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus | Where {$_.DisplayName -Match $DisplayName}
-    if($menu) {
-        [void]$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Remove($menu)
-    }
-    $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add($DisplayName, $ShowIt, "CTRL+Shift+x")
-}
-
 function Add-MenuItem {
     param([string]$DisplayName, [scriptblock]$SB, [string]$ShortCut)
 
@@ -198,4 +189,4 @@ function Add-MenuItem {
 }
 
 Add-MenuItem "_PSharp" $ShowIt "CTRL+Shift+X"
-Add-MenuItem "_Get ScriptItem" ([scriptblock]::Create((gcm Get-ScriptItem).Definition)) "CTRL+Shift+T"
+Add-MenuItem "_Get ScriptItem" ([scriptblock]::Create((Get-Command Get-ScriptItem).Definition)) "CTRL+Shift+T"
