@@ -182,7 +182,7 @@ function Find-DetailByType {
     switch -regex ($token.Type) {
         "CommandArgument|Command" {
             $TokenType="Command|Function"
-            $Name=$token.Content
+            $Name='\b{0}\b' -f $token.Content
         }
 
         "Variable" {
@@ -197,13 +197,14 @@ function Find-DetailByType {
 
 function Add-MenuItem {
     param([string]$DisplayName, [scriptblock]$SB, [string]$ShortCut)
-
-    #$DisplayName="_Get ScriptItem"
+    
     $menu=$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus | Where {$_.DisplayName -Match $DisplayName}
+    
     if($menu) {
         [void]$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Remove($menu)
     }
-    $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add($DisplayName, $SB, $ShortCut)
+    
+    [void]$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add($DisplayName, $SB, $ShortCut)
 }
 
 
