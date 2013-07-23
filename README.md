@@ -18,6 +18,6 @@
 * Prefix your search *__c:__* to just search commands
 ![image](https://raw.github.com/dfinke/PSharp/master/images/SearchVariables.png)
 
-#### Plus, you can quickly narrow your search to the usage of a function or variable by placing your cursor in or next to the name and pressing Ctrl+Shift+T
+#### Plus, you can quickly narrow your search of the usage of a function, variable or command by placing your cursor in or next to the name and pressing Ctrl+Shift+T
 
 ![image](https://raw.github.com/dfinke/PSharp/master/images/SearchContext.png)
