@@ -1,4 +1,4 @@
-[string]$MainWindow=@'
+$MainWindow=@'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Topmost="True"
@@ -15,7 +15,7 @@
             Background="Transparent" Margin="3"/>
 
         <TextBox x:Name="SearchBox" Grid.Row="0" Margin="5"></TextBox>
-        <ListView x:Name="ResultsPane" Grid.Row="1" Margin="5">
+        <ListView x:Name="ResultsPane" Grid.Row="1" Margin="5" IsSynchronizedWithCurrentItem="True">
             <ListView.View>
             <GridView>
                 <GridViewColumn Width="140" Header="Type" DisplayMemberBinding="{Binding Type}"/>
@@ -49,9 +49,9 @@ function Get-AstDetail {
     )
 
     Begin {
-        $FunctionDefinitionAst = 'System.Management.Automation.Language.FunctionDefinitionAst' -as [Type]
-        $VariableExpressionAst = 'System.Management.Automation.Language.VariableExpressionAst' -as [Type]
-        $CommandAst = 'System.Management.Automation.Language.CommandAst' -as [Type]            
+        $FunctionDefinitionAst = [System.Management.Automation.Language.FunctionDefinitionAst]
+        $VariableExpressionAst = [System.Management.Automation.Language.VariableExpressionAst]
+        $CommandAst = [System.Management.Automation.Language.CommandAst]            
     }
 
     Process {
@@ -67,9 +67,13 @@ function Get-AstDetail {
         $details = {
             param($ast)
 
-            $ast -is $FunctionDefinitionAst
-            $ast -is $VariableExpressionAst
-            $ast -is $CommandAst
+            if($ast -is $FunctionDefinitionAst) {
+                $ast
+            } elseif ($ast -is $VariableExpressionAst) {
+                $ast
+            } elseif ($ast -is $CommandAst) {
+                $as
+            }
         }
 
         $filteredAST = $fileAST.FindAll($details,$true)
@@ -187,7 +191,7 @@ function Find-DetailByType {
 
         "Variable" {
             $TokenType="Variable"
-            $Name='\$' + $token.Content
+            $Name='\$' + $token.Content + '\b'
         }
     }
     
