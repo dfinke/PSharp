@@ -20,6 +20,7 @@ $MainWindow=@'
             <GridView>
                 <GridViewColumn Width="140" Header="Type" DisplayMemberBinding="{Binding Type}"/>
                 <GridViewColumn Width="140" Header="Name" DisplayMemberBinding="{Binding Name}"/>
+                <GridViewColumn Width="140" Header="FileName" DisplayMemberBinding="{Binding FileName}"/>                
             </GridView>
             </ListView.View>
         </ListView>
@@ -28,7 +29,12 @@ $MainWindow=@'
 '@
 
 function New-ASTItem {
-    param($Type, $Name, $Extent)
+    param(
+        $Type,
+        $Name,
+        $Extent,
+        [Microsoft.PowerShell.Host.ISE.ISEFile]$ISEFile    
+    )
 
     [PSCustomObject]@{
         Type              = $Type
@@ -37,15 +43,17 @@ function New-ASTItem {
         StartColumnNumber = $Extent.StartColumnNumber
         EndLineNumber     = $Extent.EndLineNumber
         EndColumnNumber   = $Extent.EndColumnNumber
+        FileName          = $ISEFile.DisplayName
+        ISEFile           = $ISEFile
         #FullName          = $FullName
         #FileName          = Split-Path -Leaf $FullName -ErrorAction SilentlyContinue
     }
 }
 
 function Get-AstDetail {
-    param(
-        [Parameter(ValueFromPipelineByPropertyName)]
-        $FullName
+    param(        
+        [string]$ScriptInput,
+        [Microsoft.PowerShell.Host.ISE.ISEFile]$ISEFile
     )
 
     Begin {
@@ -56,13 +64,7 @@ function Get-AstDetail {
 
     Process {
 
-        if(!$FullName) {
-            $src=$psISE.CurrentFile.Editor.Text
-        } else {
-            $src=[System.IO.File]::ReadAllText($FullName)
-        }
-
-        $fileAST=[System.Management.Automation.Language.Parser]::ParseInput($src, [ref]$null, [ref]$null)
+        $fileAST=[System.Management.Automation.Language.Parser]::ParseInput($ScriptInput, [ref]$null, [ref]$null)
         
         $details = {
             param($ast)
@@ -79,9 +81,9 @@ function Get-AstDetail {
         $filteredAST = $fileAST.FindAll($details,$true)
 
         switch ($filteredAST) {
-            {$_ -is $FunctionDefinitionAst} { New-ASTItem Function $_.name $_.extent }
-            {$_ -is $CommandAst}            { New-ASTItem Command  $_.Extent.Text $_.extent }
-            {$_ -is $VariableExpressionAst} { New-ASTItem Variable $_.extent.text $_.extent }
+            {$_ -is $FunctionDefinitionAst} { New-ASTItem Function $_.name $_.extent -ISEFile $ISEFile }
+            {$_ -is $CommandAst}            { New-ASTItem Command  $_.Extent.Text $_.extent -ISEFile $ISEFile }
+            {$_ -is $VariableExpressionAst} { New-ASTItem Variable $_.extent.text $_.extent -ISEFile $ISEFile }
         }
     }
 }
@@ -114,8 +116,14 @@ function Out-SearchView {
         $SelectionChanged = {
             param($sender, $data)
             if($data.AddedItems) {
+                
                 $Selected=$data.AddedItems
-                $psISE.CurrentFile.Editor.Select(
+                
+                $psISE.CurrentPowerShellTab.Files.SetSelectedFile($Selected.ISEFile)
+                
+                $psISE.CurrentFile.Editor.EnsureVisible($Selected.StartLineNumber)
+
+                $Selected.ISEFile.Editor.Select(
                     $Selected.StartLineNumber, 
                     $Selected.StartColumnNumber, 
                     $Selected.EndLineNumber, 
@@ -141,7 +149,14 @@ function Out-SearchView {
 }
 
 
-$ShowIt = { Out-SearchView (Get-AstDetail) }
+$ShowIt = { 
+    
+    $result = $(foreach($file in $psISE.CurrentPowerShellTab.Files) {
+        Get-AstDetail $file.Editor.Text $file 
+    })
+    
+    Out-SearchView $result
+}
 
 function DoParseSearch ($search) {
 
