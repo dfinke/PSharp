@@ -1,4 +1,7 @@
 ##PSharp
+### Using *__PSHarp__*
+![image](https://raw.github.com/dfinke/PSharp/master/images/UsingPSharp.gif)
+
 ### A Productivity Tool for the Microsoft PowerShell Integrated Scripting Environment (ISE)
 * Fast navigation
 	* Ctrl+Shift+X outlines all the functions, variables and commands in the current file
