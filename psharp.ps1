@@ -10,8 +10,8 @@ $MainWindow=@'
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Button 
-            IsDefault="True" IsCancel="True" 
+        <Button
+            IsDefault="True" IsCancel="True"
             Background="Transparent" Margin="3"/>
 
         <TextBox x:Name="SearchBox" Grid.Row="0" Margin="5"></TextBox>
@@ -20,7 +20,7 @@ $MainWindow=@'
             <GridView>
                 <GridViewColumn Width="140" Header="Type" DisplayMemberBinding="{Binding Type}"/>
                 <GridViewColumn Width="140" Header="Name" DisplayMemberBinding="{Binding Name}"/>
-                <GridViewColumn Width="140" Header="FileName" DisplayMemberBinding="{Binding FileName}"/>                
+                <GridViewColumn Width="140" Header="FileName" DisplayMemberBinding="{Binding FileName}"/>
             </GridView>
             </ListView.View>
         </ListView>
@@ -33,7 +33,7 @@ function New-ASTItem {
         $Type,
         $Name,
         $Extent,
-        [Microsoft.PowerShell.Host.ISE.ISEFile]$ISEFile    
+        [Microsoft.PowerShell.Host.ISE.ISEFile]$ISEFile
     )
 
     [PSCustomObject]@{
@@ -51,7 +51,7 @@ function New-ASTItem {
 }
 
 function Get-AstDetail {
-    param(        
+    param(
         [string]$ScriptInput,
         [Microsoft.PowerShell.Host.ISE.ISEFile]$ISEFile
     )
@@ -59,23 +59,21 @@ function Get-AstDetail {
     Begin {
         $FunctionDefinitionAst = [System.Management.Automation.Language.FunctionDefinitionAst]
         $VariableExpressionAst = [System.Management.Automation.Language.VariableExpressionAst]
-        $CommandAst = [System.Management.Automation.Language.CommandAst]            
+        $CommandAst = [System.Management.Automation.Language.CommandAst]
+        $ParameterAst = [System.Management.Automation.Language.ParameterAst]
     }
 
     Process {
 
         $fileAST=[System.Management.Automation.Language.Parser]::ParseInput($ScriptInput, [ref]$null, [ref]$null)
-        
+
         $details = {
             param($ast)
 
-            if($ast -is $FunctionDefinitionAst) {
-                $ast
-            } elseif ($ast -is $VariableExpressionAst) {
-                $ast
-            } elseif ($ast -is $CommandAst) {
-                $as
-            }
+            if($ast -is $FunctionDefinitionAst) { $ast}
+            elseif ($ast -is $VariableExpressionAst) { $ast }
+            elseif ($ast -is $CommandAst) { $ast }
+            elseif ($ast -is $ParameterAst) { $ast }
         }
 
         $filteredAST = $fileAST.FindAll($details,$true)
@@ -84,6 +82,7 @@ function Get-AstDetail {
             {$_ -is $FunctionDefinitionAst} { New-ASTItem Function $_.name $_.extent -ISEFile $ISEFile }
             {$_ -is $CommandAst}            { New-ASTItem Command  $_.Extent.Text $_.extent -ISEFile $ISEFile }
             {$_ -is $VariableExpressionAst} { New-ASTItem Variable $_.extent.text $_.extent -ISEFile $ISEFile }
+            {$_ -is $ParameterAst}          { New-ASTItem Parameter $_.extent.text $_.extent -ISEFile $ISEFile }
         }
     }
 }
@@ -96,16 +95,16 @@ function Out-SearchView {
     )
 
     if(!$PreviewKeyUp) {
-        $PreviewKeyUp = {        
-            param($sender, $info)        
-        
+        $PreviewKeyUp = {
+            param($sender, $info)
+
             if($info.key -eq 'down') {
                 $ResultsPane.Focus()
                 $ResultsPane.SelectedIndex=0
-            
+
                 return
             }
-        
+
             try {
                 DoParseSearch $SearchBox.Text
             } catch {}
@@ -116,17 +115,17 @@ function Out-SearchView {
         $SelectionChanged = {
             param($sender, $data)
             if($data.AddedItems) {
-                
+
                 $Selected=$data.AddedItems
-                
+
                 $psISE.CurrentPowerShellTab.Files.SetSelectedFile($Selected.ISEFile)
-                
+
                 $psISE.CurrentFile.Editor.EnsureVisible($Selected.StartLineNumber)
 
                 $Selected.ISEFile.Editor.Select(
-                    $Selected.StartLineNumber, 
-                    $Selected.StartColumnNumber, 
-                    $Selected.EndLineNumber, 
+                    $Selected.StartLineNumber,
+                    $Selected.StartColumnNumber,
+                    $Selected.EndLineNumber,
                     $Selected.EndColumnNumber
                 )
             }
@@ -149,12 +148,12 @@ function Out-SearchView {
 }
 
 
-$ShowIt = { 
-    
+$ShowIt = {
+
     $result = $(foreach($file in $psISE.CurrentPowerShellTab.Files) {
-        Get-AstDetail $file.Editor.Text $file 
+        Get-AstDetail $file.Editor.Text $file
     })
-    
+
     Out-SearchView $result
 }
 
@@ -166,13 +165,14 @@ function DoParseSearch ($search) {
         v='variable'
         f='function'
         c='command'
+        p='parameter'
     }
 
     $whereBlock = {$_.name -match $search}
     if($search -and $search.IndexOf(':') -eq 1) {
-        $type, $name = $search.split(':')    
-        $whereBlock = '{{ $_.type -eq "{0}" -and $_.name -match "{1}" }}' -f $h.$type, $name | Invoke-Expression            
-    } 
+        $type, $name = $search.split(':')
+        $whereBlock = '{{ $_.type -eq "{0}" -and $_.name -match "{1}" }}' -f $h.$type, $name | Invoke-Expression
+    }
 
     $ResultsPane.ItemsSource = @($list | Where $whereBlock)
 }
@@ -190,13 +190,13 @@ function Get-ScriptItem {
             if ($token.StartColumn -le $column -and $token.EndColumn -ge $column) {
                 $token
             }
-        }        
+        }
     }
 }
 
 function Find-DetailByType {
     $token = Get-ScriptItem
-    
+
     $token.Type|Out-Host
     switch -regex ($token.Type) {
         "CommandArgument|Command" {
@@ -209,23 +209,31 @@ function Find-DetailByType {
             $Name='\$' + $token.Content + '\b'
         }
     }
-    
+
     $list  = Get-AstDetail | where {$_.Type -match $TokenType -and $_.Name -match $Name}
     Out-SearchView $list
 }
 
 function Add-MenuItem {
-    param([string]$DisplayName, [scriptblock]$SB, [string]$ShortCut)
-    
+    param([string]$DisplayName, $SB, $ShortCut)
+
     $menu=$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus | Where {$_.DisplayName -Match $DisplayName}
-    
+
     if($menu) {
         [void]$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Remove($menu)
     }
-    
+
     [void]$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add($DisplayName, $SB, $ShortCut)
 }
 
+function Add-SubMenuItem {
+    param([string]$Root, $SubMenu, $SB, $ShortCut)
 
-Add-MenuItem "_PSharp" $ShowIt "CTRL+Shift+X"
-Add-MenuItem "_Get ScriptItem" ([scriptblock]::Create((Get-Command Find-DetailByType).Definition)) "CTRL+Shift+T"
+    $menu=$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus | Where {$_.DisplayName -Match $Root}
+
+    [void]$menu.Submenus.Add($SubMenu, $SB, $ShortCut)
+}
+
+Add-MenuItem "_PSharp" $null $null
+Add-SubMenuItem "_PSharp" "Show _All" $ShowIt "CTRL+Shift+X"
+Add-SubMenuItem "_PSharp" "_Find This" ([scriptblock]::Create((Get-Command Find-DetailByType).Definition)) "CTRL+Shift+T"
