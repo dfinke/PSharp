@@ -214,6 +214,30 @@ function Find-DetailByType {
     Out-SearchView $list
 }
 
+function ConvertTo-CamelCase ([string]$target) {
+
+    function transform ([string]$t) {
+        $t[0].ToString().ToUpper() + $t.Substring(1)
+    }
+
+    if($target.IndexOf('-') -ge 0) {
+        $verb, $noun = $target.ToLower().split('-')
+        return "$(transform $verb)-$(transform $noun)"
+    }
+
+    "$(transform $target)"
+}
+
+$sb = {
+
+    $psISE.CurrentFile.Editor.SelectCaretLine()
+
+    $text = ConvertTo-CamelCase $psISE.CurrentFile.Editor.SelectedText
+    $psISE.CurrentFile.Editor.InsertText("function {0} {{`r`n}}`r`n" -f $text)
+}
+
+
+
 function Add-MenuItem {
     param([string]$DisplayName, $SB, $ShortCut)
 
@@ -237,3 +261,5 @@ function Add-SubMenuItem {
 Add-MenuItem "_PSharp" $null $null
 Add-SubMenuItem "_PSharp" "Show _All" $ShowIt "CTRL+Shift+X"
 Add-SubMenuItem "_PSharp" "_Find This" ([scriptblock]::Create((Get-Command Find-DetailByType).Definition)) "CTRL+Shift+T"
+Add-SubMenuItem "_PSharp" "_Create Function" $sb "Ctrl+Shift+Alt+F"
+#$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add("Create Function", $sb, "Ctrl+Shift+Alt+F")
