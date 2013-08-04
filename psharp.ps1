@@ -1,5 +1,7 @@
-. .\ConvertTo-PSCustomObject.ps1
-. .\Edit-Live.ps1
+$path = Split-Path $MyInvocation.MyCommand.path
+
+. (Join-Path $path ConvertTo-PSCustomObject.ps1)
+. (Join-Path $path Edit-Live.ps1)
 
 $MainWindow=@'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
