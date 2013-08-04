@@ -21,7 +21,7 @@
 function Get-ExtentInfo ($targetExtent) {
     [PSCustomObject]@{
         Line              = $targetExtent.Extent.Text
-        StartLineNumber   = $targetExtent.Extent. StartLineNumber  
+        StartLineNumber   = $targetExtent.Extent.StartLineNumber  
         StartColumnNumber = $targetExtent.Extent.StartColumnNumber
         EndLineNumber     = $targetExtent.Extent.EndLineNumber
         EndColumnNumber   = $targetExtent.Extent.EndColumnNumber
