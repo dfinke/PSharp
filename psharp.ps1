@@ -201,8 +201,7 @@ function Get-ScriptItem {
 
 function Find-DetailByType {
     $token = Get-ScriptItem
-
-    $token.Type|Out-Host
+   
     switch -regex ($token.Type) {
         "CommandArgument|Command" {
             $TokenType="Command|Function"
@@ -211,11 +210,13 @@ function Find-DetailByType {
 
         "Variable" {
             $TokenType="Variable"
-            $Name='\$' + $token.Content + '\b'
+            #$Name='\$' + $token.Content #+ '\b'
+            #$Name='\$' + $token.Content #+ '\b'
+            $Name=$token.Content #+ '\b'
         }
     }
 
-    $list  = Get-AstDetail | where {$_.Type -match $TokenType -and $_.Name -match $Name}
+    $list  = Get-AstDetail $psISE.CurrentFile.Editor.Text | where {$_.Type -match $TokenType -and $_.Name -match $Name}
     Out-SearchView $list
 }
 
