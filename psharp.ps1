@@ -216,7 +216,7 @@ function Find-DetailByType {
         }
     }
 
-    $list  = Get-AstDetail $psISE.CurrentFile.Editor.Text | where {$_.Type -match $TokenType -and $_.Name -match $Name}
+    $list = Get-AstDetail $psISE.CurrentFile.Editor.Text $psISE.CurrentFile | where {$_.Type -match $TokenType -and $_.Name -match $Name}    
     Out-SearchView $list
 }
 
@@ -267,6 +267,4 @@ Add-MenuItem "_PSharp" $null $null
 Add-SubMenuItem "_PSharp" "Show _All" $ShowIt "CTRL+Shift+X"
 Add-SubMenuItem "_PSharp" "_Find This" ([scriptblock]::Create((Get-Command Find-DetailByType).Definition)) "CTRL+Shift+T"
 Add-SubMenuItem "_PSharp" "_Convert To Function" ([scriptblock]::Create((Get-Command ConvertTo-Function).Definition)) "CTRL+Shift+Alt+F"
-
 Add-SubMenuItem "_PSharp" "Convert To _PSCustomObject" ([scriptblock]::Create((Get-Command ConvertTo-PSCustomObject).Definition)) "CTRL+Shift+Alt+P"
-#Add-SubMenuItem "_PSharp" "Edit _Live" ([scriptblock]::Create((Get-Command Edit-Live).Definition)) "CTRL+Shift+Alt+L"
