@@ -75,18 +75,18 @@ function Get-AstDetail {
         $details = {
             param($ast)
 
-            if($ast -is $FunctionDefinitionAst) { $ast}
+            if($ast -is $FunctionDefinitionAst)      { $ast }
             elseif ($ast -is $VariableExpressionAst) { $ast }
-            elseif ($ast -is $CommandAst) { $ast }
-            elseif ($ast -is $ParameterAst) { $ast }
+            elseif ($ast -is $CommandAst)            { $ast }
+            elseif ($ast -is $ParameterAst)          { $ast }
         }
 
         $filteredAST = $fileAST.FindAll($details,$true)
 
         switch ($filteredAST) {
-            {$_ -is $FunctionDefinitionAst} { New-ASTItem Function $_.name $_.extent -ISEFile $ISEFile }
-            {$_ -is $CommandAst}            { New-ASTItem Command  $_.Extent.Text $_.extent -ISEFile $ISEFile }
-            {$_ -is $VariableExpressionAst} { New-ASTItem Variable $_.extent.text $_.extent -ISEFile $ISEFile }
+            {$_ -is $FunctionDefinitionAst} { New-ASTItem Function  $_.name        $_.extent -ISEFile $ISEFile }
+            {$_ -is $CommandAst}            { New-ASTItem Command   $_.Extent.Text $_.extent -ISEFile $ISEFile }
+            {$_ -is $VariableExpressionAst} { New-ASTItem Variable  $_.extent.text $_.extent -ISEFile $ISEFile }
             {$_ -is $ParameterAst}          { New-ASTItem Parameter $_.extent.text $_.extent -ISEFile $ISEFile }
         }
     }
