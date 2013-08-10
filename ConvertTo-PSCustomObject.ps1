@@ -1,49 +1,73 @@
 function ConvertTo-PSCustomObject {
 
-    $output = @()
-    $txt = $psISE.CurrentFile.Editor.SelectedText
+    function New-ParamStmt {
+        param($tokens)
+        
+        $newList = $tokens| ForEach {"`t`$"+$_}
+@"
+param(
+$($newList -join ",`r`n")
+)
 
-    function Get-NewToken {
+
+"@
+    }
+    
+    function New-PSCustomObject {
+        param($tokens)
+
+        $newList = $tokens| ForEach { "`t{0} = `${0}" -f $_ }
+
+@"
+[PSCustomObject]@{
+$($newList -join "`r`n")
+}
+
+
+"@
+    }
+   
+   function Get-NewToken {
         param($line)
 
-        $result = (
+        $results = (
                 [System.Management.Automation.PSParser]::Tokenize($line, [ref]$null) |
                     where {
-                        $_.Type -match 'variable|member' -and
+                        $_.Type -match 'variable|member|command' -and
                         $_.Content -ne "_"
                     }
              ).Content
-
-        ConvertTo-CamelCase $result
+        
+        $(foreach($result in $results) { ConvertTo-CamelCase $result }) -join ''
     }
 
-    if([string]::IsNullOrEmpty($txt)) {
-        $psISE.CurrentFile.Editor.SelectCaretLine()
-        $txt = $psISE.CurrentFile.Editor.SelectedText
-        $Key = Get-NewToken $txt
-        $output += "`t$Key=$txt"
-    } else {
+    function Get-EditorTokens {        
+        $txt = $psISE.CurrentFile.Editor.SelectedText    
+        if([string]::IsNullOrEmpty($txt)) {
+            $psISE.CurrentFile.Editor.SelectCaretLine()
+            $txt = $psISE.CurrentFile.Editor.SelectedText
 
-        $lines = $txt.split("`n")
-        foreach($line in $lines) {
+            Get-NewToken $txt
 
-            $line=$line.trim()
+        } else {
 
-            if([string]::IsNullOrEmpty($line)) {continue}
+            $lines = $txt.split("`n")
+            foreach($line in $lines) {
+                $line=$line.trim()
+                if([string]::IsNullOrEmpty($line)) {continue}
 
-            $Key = Get-NewToken $line
-            $output += "`t$Key=$line"
+                Get-NewToken $line            
+            }
         }
     }
 
-    if($output.Count -eq 0) {return}
-
-    $t = @"
-[PSCustomObject]@{
-$($output -join "`r`n")
-}
-
-"@
-
+    $EditorTokens=Get-EditorTokens
+ 
+    
+    $t = $(
+        New-ParamStmt $EditorTokens
+        New-PSCustomObject $EditorTokens
+    )
+    
     $psISE.CurrentFile.Editor.InsertText($t)
 }
