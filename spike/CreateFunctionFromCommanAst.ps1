@@ -1,8 +1,8 @@
 ﻿cls
 
 $s=@'
-add-contact john 1 a 1.1 'a','b',1 @() @{} {} 
-#add-contact -Name john -Address somewhere -City ny -State ny -Zip 10017 
+#add-contact john 1 a 1.1 'a','b',1 @() @{} {} 
+add-contact -Name john -Address somewhere -City ny -State ny -Zip 10017 
 #add-contact john somewhere ny ny 10017 
 '@
 
@@ -18,8 +18,7 @@ function ZipList {
 
     param(
         $dataTypes,
-        $parameterNames,
-        [Switch]$AsJoin
+        $parameterNames    
     )
 
     if($parameterNames.Length -eq 0) {        
@@ -27,16 +26,29 @@ function ZipList {
     }
 
     $count = $dataTypes.Count
-
-    $params=for($idx=0; $idx -lt $count; $idx+=1) {
-        "[{0}]`${1}" -f $dataTypes[$idx], $parameterNames[$idx]
-    }
-
-    if($AsJoin) {
-        return ($params -join ",`r`n")
-    }
-
-    $params
+    for($idx=0; $idx -lt $count; $idx+=1) {
+        [PSCustomObject]@{
+            DataType= $DataTypes[$Idx]
+            ParameterName = $ParameterNames[$Idx]
+        }
+    }    
 }
 
-zipList $dataTypes $parameterNames
+function New-ParamStmt {
+    param(
+        [Parameter(ValueFromPipeLine)]
+        $Item
+    )
+    
+    Begin   { $Params = @() }
+    Process { $Params += "[{0}] {1}" -f $Item.DataType, $Item.ParameterName }
+    End     { $Params -join ",`r`n" }
+}
+
+filter New-ParamStmt {
+    begin   { $Params = @() }
+    process { $Params += "[{0}] {1}" -f $_.DataType, $_.ParameterName }
+    end     { $Params -join ",`r`n" }
+}
+
+ZipList $dataTypes $parameterNames | New-ParamStmt
