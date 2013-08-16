@@ -2,6 +2,7 @@ $path = Split-Path $MyInvocation.MyCommand.path
 
 . (Join-Path $path ConvertTo-PSCustomObject.ps1)
 . (Join-Path $path Edit-Live.ps1)
+. (Join-Path $path New-FunctionFromSelectedText.ps1)
 
 $MainWindow=@'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -26,6 +27,7 @@ $MainWindow=@'
                 <GridViewColumn Width="140" Header="Type" DisplayMemberBinding="{Binding Type}"/>
                 <GridViewColumn Width="140" Header="Name" DisplayMemberBinding="{Binding Name}"/>
                 <GridViewColumn Width="140" Header="FileName" DisplayMemberBinding="{Binding FileName}"/>
+                <GridViewColumn Width="140" Header="LineNumber" DisplayMemberBinding="{Binding StartLineNumber}"/>
             </GridView>
             </ListView.View>
         </ListView>
@@ -268,3 +270,4 @@ Add-SubMenuItem "_PSharp" "Show _All" $ShowIt "CTRL+Shift+X"
 Add-SubMenuItem "_PSharp" "_Find This" ([scriptblock]::Create((Get-Command Find-DetailByType).Definition)) "CTRL+Shift+T"
 Add-SubMenuItem "_PSharp" "_Convert To Function" ([scriptblock]::Create((Get-Command ConvertTo-Function).Definition)) "CTRL+Shift+Alt+F"
 Add-SubMenuItem "_PSharp" "Convert To _PSCustomObject" ([scriptblock]::Create((Get-Command ConvertTo-PSCustomObject).Definition)) "CTRL+Shift+Alt+P"
+Add-SubMenuItem "_PSharp" "_Extract New Function" ([scriptblock]::Create((Get-Command New-FunctionFromSelectedText).Definition)) "CTRL+Shift+E"
