@@ -44,12 +44,48 @@
         }
     }
 
+    function Get-NewFunctionName
+    {
+        $MainWindow=@'
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Topmost="True"
+        WindowStartupLocation="CenterScreen"
+        Title="PSHarp" Height="350" Width="425">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="35" />
+            <RowDefinition Height="35" />
+        </Grid.RowDefinitions>        
+
+        <TextBox x:Name="NameBox" Grid.Row="0" Margin="5"></TextBox>
+        <Button x:Name="DoneButton" Grid.Row="1" IsDefault="True" Margin="5">OK</Button>
+    </Grid>
+</Window>
+'@
+
+        $Window = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader ([xml]$MainWindow)))
+        $NameBox=$Window.FindName("NameBox")
+        $Button = $Window.FindName("DoneButton")
+        $Button.add_Click({
+            param($sender, $data)            
+            $Window.close()
+        })
+        
+        
+
+        [void]$NameBox.Focus()
+        [void]$Window.ShowDialog()
+        $Namebox.text
+    }
+
+    $Name = Get-NewFunctionName
 
     $SourceFile = $psISE.CurrentFile
     $Scriptblock = $SourceFile.Editor.SelectedText
     $Parameters = Get-UnAssignedVariable $Scriptblock 
 
-    $Definition = "Function Name `n{"
+    $Definition = "Function $Name `n{"
     $Definition += "`n`t param (`n"
     
     $OFS = ",`n`t`t"
@@ -59,10 +95,22 @@
     $Definition += $Scriptblock
     $Definition += "`n}"    
     
-    $SourceFile.Editor.Text = $SourceFile.editor.text -replace [regex]::Escape($SourceFile.Editor.SelectedText)
+    $ReplaceCommand = "$Name "
+    foreach ($p in $Parameters)
+    {
+        $parameter = $p -replace '\$'
+        $ReplaceCommand += "-{0} {1} " -f $parameter, $p
+    }
+    
+    $HighlightStartLine = $SourceFile.Editor.CaretLine
+    $HighlightStartColumn = $SourceFile.Editor.CaretColumn
+
+    $EscapedText =  [regex]::Escape($SourceFile.Editor.SelectedText)
+    $SourceFile.Editor.Text = $SourceFile.editor.text -replace $EscapedText, $ReplaceCommand
+    
 
     $ISEFile=$psISE.CurrentPowerShellTab.Files.Add()
     $psISE.CurrentPowerShellTab.Files.SetSelectedFile($ISEFile)   
     $ISEFile.Editor.Text = $Definition    
-    $ISEFile.Editor.Select(1,10,1,14)
+
 }
