@@ -1,8 +1,6 @@
-$path = Split-Path $MyInvocation.MyCommand.path
-
-. (Join-Path $path ConvertTo-PSCustomObject.ps1)
-. (Join-Path $path Edit-Live.ps1)
-. (Join-Path $path New-FunctionFromSelectedText.ps1)
+. (Join-Path $PSScriptRoot ConvertTo-PSCustomObject.ps1)
+. (Join-Path $PSScriptRoot Edit-Live.ps1)
+. (Join-Path $PSScriptRoot New-FunctionFromSelectedText.ps1)
 
 $MainWindow=@'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
