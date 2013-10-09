@@ -1,4 +1,13 @@
 ##PSharp
+
+### Installing
+
+To install in your personal modules folder (e.g. ~\Documents\WindowsPowerShell\Modules), run:
+
+```powershell
+iex (new-object System.Net.WebClient).DownloadString('https://raw.github.com/dfinke/PSharp/master/Install.ps1')
+```
+
 ### Using *__PSHarp__*
 ![image](https://raw.github.com/dfinke/PSharp/master/images/UsingPSharp.gif)
 
