@@ -2,6 +2,7 @@ param([string]$InstallDirectory)
 
 $fileList = @(
     'ConvertTo-PSCustomObject.ps1',
+    'New-FunctionFromSelectedText.ps1',
     'psharp.psm1'
 )
 
