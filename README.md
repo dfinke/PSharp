@@ -9,7 +9,7 @@ iex (new-object System.Net.WebClient).DownloadString('https://raw.github.com/dfi
 ```
 
 ### Using *__PSHarp__*
-![image](https://raw.github.com/dfinke/PSharp/master/images/UsingPSharp.gif)
+![image](https://raw.github.com/dfinke/PSharp/master/images/PSharp.gif)
 
 ### A Productivity Tool for the Microsoft PowerShell Integrated Scripting Environment (ISE)
 * Fast navigation
