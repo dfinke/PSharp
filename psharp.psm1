@@ -7,7 +7,7 @@ $MainWindow=@'
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Topmost="True"
         WindowStartupLocation="CenterScreen"
-        Title="PSHarp" Height="350" Width="425">
+        Title="PSHarp" Height="550" Width="825">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="35" />
@@ -164,7 +164,11 @@ $ShowIt = {
 
 function DoParseSearch ($search) {
 
-    if(!$search) {return}
+    if(!$search) {
+        
+        $ResultsPane.ItemsSource = $list    
+        return
+    }
 
     $h=@{
         v='variable'
