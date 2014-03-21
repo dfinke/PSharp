@@ -224,18 +224,52 @@ function Find-DetailByType {
     Out-SearchView $list
 }
 
-function ConvertTo-CamelCase ([string]$target) {
+function ConvertTo-CamelCase {
+<#      
+    .SYNOPSIS
+     Appropriately converts data within strings to camel case if they are cmdlets in the form verb-noun.
 
-    function transform ([string]$t) {
-        $t[0].ToString().ToUpper() + $t.Substring(1)
+    .DESCRIPTION
+     This cmdlet capitalizes the first letter of any verb-noun found in the string.  Any hyphenated word will be converted into CamelCase.
+
+    .PARAMETER  InputText
+     Specifies the string or string collection that should be converted to cmdlet CamelCase.
+        
+    .EXAMPLE
+     Convertto-CamelCase "select-object"    
+        
+    .EXAMPLE
+     gc c:\file.ps1 |ConvertTo-CamelCase
+
+    .INPUTS
+     System.String
+
+    .OUTPUTS
+     System.String
+
+    .LINK
+     https://github.com/dfinke/PSharp
+     
+#>
+    param(
+        [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
+        [Alias('Target')]
+        [string[]] $InputText
+    )
+
+    BEGIN {
+        function transform ([string]$t) {
+            $t[0].ToString().ToUpper() + $t.Substring(1)
+        }
     }
 
-    if($target.IndexOf('-') -ge 0) {
-        $verb, $noun = $target.ToLower().split('-')
-        return "$(transform $verb)-$(transform $noun)"
+    PROCESS {
+        $matches = $InputText |Select-String -AllMatches '\b(\w+)-(\w+)\b'
+        foreach ($m in $matches.Matches) {
+            $InputText = $InputText -replace $m.groups[0].value, ('{0}-{1}' -f (transform $m.groups[1].value), (transform $m.groups[2].value))
+        }
+        $InputText
     }
-
-    "$(transform $target)"
 }
 
 function ConvertTo-Function {
